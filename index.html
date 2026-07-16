@@ -33,7 +33,6 @@
 
     <!-- Screen Header Status Bar -->
     <div class="h-11 bg-white pt-6 px-6 flex justify-between items-center text-xs font-semibold text-slate-700 z-50 shrink-0">
-      <!-- リアルタイム同期されるデジタル時計 -->
       <div id="status-bar-time">00:00</div>
       <div class="flex gap-1.5 items-center">
         <i class="fa-solid fa-signal"></i>
@@ -155,10 +154,10 @@
           <span id="sf-status" class="text-[10px] text-rose-500 font-bold bg-rose-50 px-2 py-0.5 rounded">未認証</span>
         </div>
         <div class="flex flex-col gap-2.5">
-          <!-- OAuth Auto-Token Fetching Panel -->
-          <details class="bg-slate-50 p-2.5 rounded-xl border border-slate-150 text-xs">
+          <!-- [UPDATED] OAuth Auto-Token Fetching Panel -->
+          <details class="bg-slate-50 p-2.5 rounded-xl border border-slate-150 text-xs" open>
             <summary class="font-bold text-slate-600 cursor-pointer flex items-center justify-between">
-              <span><i class="fa-solid fa-key mr-1 text-indigo-500"></i> OAuthトークン自動取得</span>
+              <span><i class="fa-solid fa-key mr-1 text-indigo-500"></i> OAuthトークン自動取得（Client Credentials）</span>
               <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
             </summary>
             <div class="flex flex-col gap-2 pt-2 mt-2 border-t border-slate-200">
@@ -176,15 +175,6 @@
               <div>
                 <label class="text-[9px] font-bold text-slate-400 uppercase">クライアントシークレット (Consumer Secret)</label>
                 <input type="password" id="oauth-client-secret" placeholder="接続アプリのConsumer Secret" class="w-full mt-0.5 px-2 py-1 border border-slate-200 rounded text-xs bg-white focus:outline-none">
-              </div>
-              <div>
-                <label class="text-[9px] font-bold text-slate-400 uppercase">ユーザー名 (Salesforce ID)</label>
-                <input type="email" id="oauth-username" placeholder="name@domain.com" class="w-full mt-0.5 px-2 py-1 border border-slate-200 rounded text-xs bg-white focus:outline-none">
-              </div>
-              <div>
-                <!-- セキュリティトークン抜きのパスワード入力に変更 -->
-                <label class="text-[9px] font-bold text-slate-400 uppercase">パスワード</label>
-                <input type="password" id="oauth-password" placeholder="Salesforceログインパスワード" class="w-full mt-0.5 px-2 py-1 border border-slate-200 rounded text-xs bg-white focus:outline-none">
               </div>
               <button type="button" id="btn-fetch-token" class="w-full py-1.5 mt-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold transition flex items-center justify-center gap-1">
                 <i class="fa-solid fa-arrows-rotate animate-spin hidden" id="token-spin"></i> OAuthトークンを取得
@@ -348,15 +338,13 @@
     document.getElementById('sf-tenant').addEventListener('input', updateAuthIndicator);
     document.getElementById('sf-token').addEventListener('input', updateAuthIndicator);
 
-    // --- OAuth 2.0 Token Fetcher Engine (セキュリティトークン不要版) ---
+    // --- OAuth 2.0 Client Credentials Token Fetcher Engine (安定稼働版) ---
     document.getElementById('btn-fetch-token').addEventListener('click', async () => {
       const loginUrl = document.getElementById('oauth-login-url').value;
       const clientId = document.getElementById('oauth-client-id').value.trim();
       const clientSecret = document.getElementById('oauth-client-secret').value.trim();
-      const username = document.getElementById('oauth-username').value.trim();
-      const password = document.getElementById('oauth-password').value.trim();
 
-      if (!clientId || !clientSecret || !username || !password) {
+      if (!clientId || !clientSecret) {
         alert("OAuth自動取得に必要なすべてのフィールドを入力してください。");
         return;
       }
@@ -368,13 +356,11 @@
 
       const endpoint = `${loginUrl}/services/oauth2/token`;
       
-      // FormData for x-www-form-urlencoded
+      // Client Credentials Flow parameters
       const bodyParams = new URLSearchParams();
-      bodyParams.append('grant_type', 'password');
+      bodyParams.append('grant_type', 'client_credentials');
       bodyParams.append('client_id', clientId);
       bodyParams.append('client_secret', clientSecret);
-      bodyParams.append('username', username);
-      bodyParams.append('password', password); // セキュリティトークン抜きの生のパスワードのみを送信します
 
       try {
         const response = await fetch(endpoint, {
@@ -392,7 +378,6 @@
             
             // ローカルストレージに構成情報をセーブ（セキュリティのためシークレット等は保存しません）
             localStorage.setItem('sf_demo_client_id', clientId);
-            localStorage.setItem('sf_demo_username', username);
             
             updateAuthIndicator();
             alert("OAuthトークンの取得に成功しました！接続設定にトークンがセットされました。");
@@ -401,7 +386,7 @@
           }
         } else {
           const errData = await response.json();
-          alert(`認証エラー: ${errData.error_description || response.statusText}\n※エラーが発生する場合は、前述の『CORS設定』や『接続アプリケーションのIP信頼設定』をご確認ください。`);
+          alert(`認証エラー: ${errData.error_description || response.statusText}\n\n※CORSポリシー違反が出る場合は、Salesforce側の『CORS』設定にご自身のGitHub Pagesのドメイン（例: https://<ユーザー名>.github.io）を必ずご登録ください。`);
         }
       } catch (error) {
         console.error("OAuth Token request failed", error);
@@ -677,9 +662,6 @@
     window.onload = () => {
       if (localStorage.getItem('sf_demo_client_id')) {
         document.getElementById('oauth-client-id').value = localStorage.getItem('sf_demo_client_id');
-      }
-      if (localStorage.getItem('sf_demo_username')) {
-        document.getElementById('oauth-username').value = localStorage.getItem('sf_demo_username');
       }
       initDemoMap();
     };
