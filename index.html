@@ -33,6 +33,7 @@
 
     <!-- Screen Header Status Bar -->
     <div class="h-11 bg-white pt-6 px-6 flex justify-between items-center text-xs font-semibold text-slate-700 z-50 shrink-0">
+      <!-- リアルタイム同期されるデジタル時計 -->
       <div id="status-bar-time">00:00</div>
       <div class="flex gap-1.5 items-center">
         <i class="fa-solid fa-signal"></i>
@@ -154,7 +155,7 @@
           <span id="sf-status" class="text-[10px] text-rose-500 font-bold bg-rose-50 px-2 py-0.5 rounded">未認証</span>
         </div>
         <div class="flex flex-col gap-2.5">
-          <!-- [UPDATED] OAuth Auto-Token Fetching Panel -->
+          <!-- OAuth Auto-Token Fetching Panel -->
           <details class="bg-slate-50 p-2.5 rounded-xl border border-slate-150 text-xs" open>
             <summary class="font-bold text-slate-600 cursor-pointer flex items-center justify-between">
               <span><i class="fa-solid fa-key mr-1 text-indigo-500"></i> OAuthトークン自動取得（Client Credentials）</span>
@@ -162,11 +163,9 @@
             </summary>
             <div class="flex flex-col gap-2 pt-2 mt-2 border-t border-slate-200">
               <div>
-                <label class="text-[9px] font-bold text-slate-400 uppercase">ログイン環境 (URL)</label>
-                <select id="oauth-login-url" class="w-full mt-0.5 px-2 py-1 border border-slate-200 rounded text-xs bg-white focus:outline-none">
-                  <option value="https://login.salesforce.com">本番環境 / デベロッパー (login.salesforce.com)</option>
-                  <option value="https://test.salesforce.com">Sandbox環境 (test.salesforce.com)</option>
-                </select>
+                <label class="text-[9px] font-bold text-slate-400 uppercase">ログイン環境 (URL / 私のドメイン)</label>
+                <input type="text" id="oauth-login-url" placeholder="例: https://yourdomain.my.salesforce.com" class="w-full mt-0.5 px-2 py-1 border border-slate-200 rounded text-xs bg-white focus:outline-none">
+                <p class="text-[8px] text-slate-400 mt-0.5">※ https://xxxx.my.salesforce.com の形式でご自身のドメインを入力してください</p>
               </div>
               <div>
                 <label class="text-[9px] font-bold text-slate-400 uppercase">クライアントID (Consumer Key)</label>
@@ -340,13 +339,22 @@
 
     // --- OAuth 2.0 Client Credentials Token Fetcher Engine (安定稼働版) ---
     document.getElementById('btn-fetch-token').addEventListener('click', async () => {
-      const loginUrl = document.getElementById('oauth-login-url').value;
+      let loginUrl = document.getElementById('oauth-login-url').value.trim();
       const clientId = document.getElementById('oauth-client-id').value.trim();
       const clientSecret = document.getElementById('oauth-client-secret').value.trim();
 
-      if (!clientId || !clientSecret) {
+      if (!loginUrl || !clientId || !clientSecret) {
         alert("OAuth自動取得に必要なすべてのフィールドを入力してください。");
         return;
+      }
+
+      // プロトコルスキーム(https://)が抜けている場合は補正
+      if (!loginUrl.startsWith('http://') && !loginUrl.startsWith('https://')) {
+        loginUrl = 'https://' + loginUrl;
+      }
+      // 末尾にスラッシュがある場合は削除
+      if (loginUrl.endsWith('/')) {
+        loginUrl = loginUrl.slice(0, -1);
       }
 
       const spinIcon = document.getElementById('token-spin');
@@ -377,6 +385,7 @@
             document.getElementById('sf-token').value = data.access_token;
             
             // ローカルストレージに構成情報をセーブ（セキュリティのためシークレット等は保存しません）
+            localStorage.setItem('oauth_login_url', loginUrl);
             localStorage.setItem('sf_demo_client_id', clientId);
             
             updateAuthIndicator();
@@ -662,6 +671,9 @@
     window.onload = () => {
       if (localStorage.getItem('sf_demo_client_id')) {
         document.getElementById('oauth-client-id').value = localStorage.getItem('sf_demo_client_id');
+      }
+      if (localStorage.getItem('oauth_login_url')) {
+        document.getElementById('oauth-login-url').value = localStorage.getItem('oauth_login_url');
       }
       initDemoMap();
     };
