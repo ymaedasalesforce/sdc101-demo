@@ -131,7 +131,7 @@
         <div class="flex items-center gap-2 text-teal-600 font-semibold text-sm">
           <i class="fa-solid fa-route"></i> 顧客移動履歴の設定 (CSV)
         </div>
-        <p class="text-xs text-slate-400">フォーマット: timestamp, lat, lng</p>
+        <p class="text-xs text-slate-400">フォーマット: eventId, category, dateTime, deviceId, eventType, sessionId, coordinateX, coordinateY, geofenceStatus, IsInGeofence</p>
         <label class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-4 cursor-pointer hover:bg-slate-50 transition">
           <i class="fa-solid fa-cloud-arrow-up text-xl text-slate-400 mb-1"></i>
           <span class="text-xs text-slate-500 font-medium" id="route-file-name">移動履歴CSVを選択</span>
@@ -194,7 +194,7 @@
           </div>
           <div>
             <label class="text-[10px] font-bold text-slate-500">インジェクションAPI 接続名 (ソース名)</label>
-            <input type="text" id="sf-source" placeholder="GeofenceSource" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-emerald-500 transition">
+            <input type="text" id="sf-source" placeholder="MobileEngagement" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-emerald-500 transition">
           </div>
         </div>
       </div>
@@ -256,15 +256,15 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   
   <script>
-    // --- Sample Default Data ---
+    // --- Sample Default Data (スキーマ定義「MobileEngagement」準拠) ---
     const defaultStore = { id: "S01", name: "Salesforceタワー東京丸の内", lat: 35.6835, lng: 139.7655 };
     const defaultRoute = [
-      { timestamp: "2026-07-16T13:00:00Z", lat: 35.6780, lng: 139.7680 },
-      { timestamp: "2026-07-16T13:02:00Z", lat: 35.6800, lng: 139.7670 },
-      { timestamp: "2026-07-16T13:04:00Z", lat: 35.6820, lng: 139.7662 },
-      { timestamp: "2026-07-16T13:06:00Z", lat: 35.6836, lng: 139.7654 }, // Within fence
-      { timestamp: "2026-07-16T13:08:00Z", lat: 35.6850, lng: 139.7640 },
-      { timestamp: "2026-07-16T13:10:00Z", lat: 35.6870, lng: 139.7630 }
+      { eventId: "EV-10001", category: "Engagement", dateTime: "2026-07-16T13:00:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6780, coordinateY: 139.7680, geofenceStatus: "Outside", IsInGeofence: 0 },
+      { eventId: "EV-10002", category: "Engagement", dateTime: "2026-07-16T13:02:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6800, coordinateY: 139.7670, geofenceStatus: "Outside", IsInGeofence: 0 },
+      { eventId: "EV-10003", category: "Engagement", dateTime: "2026-07-16T13:04:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6820, coordinateY: 139.7662, geofenceStatus: "Outside", IsInGeofence: 0 },
+      { eventId: "EV-10004", category: "Engagement", dateTime: "2026-07-16T13:06:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6836, coordinateY: 139.7654, geofenceStatus: "Inside", IsInGeofence: 1 }, // Within fence
+      { eventId: "EV-10005", category: "Engagement", dateTime: "2026-07-16T13:08:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6850, coordinateY: 139.7640, geofenceStatus: "Outside", IsInGeofence: 0 },
+      { eventId: "EV-10006", category: "Engagement", dateTime: "2026-07-16T13:10:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6870, coordinateY: 139.7630, geofenceStatus: "Outside", IsInGeofence: 0 }
     ];
 
     // Current app operational states
@@ -453,8 +453,19 @@
         const routes = [];
         for(let i=1; i<lines.length; i++) {
           const parts = lines[i].split(',');
-          if(parts.length >= 3) {
-            routes.push({ timestamp: parts[0].trim(), lat: parseFloat(parts[1]), lng: parseFloat(parts[2]) });
+          if(parts.length >= 10) {
+            routes.push({ 
+              eventId: parts[0].trim(), 
+              category: parts[1].trim(), 
+              dateTime: parts[2].trim(), 
+              deviceId: parts[3].trim(), 
+              eventType: parts[4].trim(), 
+              sessionId: parts[5].trim(), 
+              coordinateX: parseFloat(parts[6]), 
+              coordinateY: parseFloat(parts[7]),
+              geofenceStatus: parts[8].trim(),
+              IsInGeofence: parseInt(parts[9])
+            });
           }
         }
         if(routes.length > 0) appRouteData = routes;
@@ -487,7 +498,7 @@
         color: '#4f46e5', fillColor: '#6366f1', fillOpacity: 0.15, radius: configRadiusKm * 1000
       }).addTo(mapDemo);
 
-      markerDemoUser = L.marker([appRouteData[0].lat, appRouteData[0].lng], {
+      markerDemoUser = L.marker([appRouteData[0].coordinateX, appRouteData[0].coordinateY], {
         icon: L.divIcon({ className: 'bg-indigo-600 w-4 h-4 rounded-full border-2 border-white shadow' })
       }).addTo(mapDemo);
 
@@ -506,7 +517,7 @@
         color: '#059669', fillColor: '#10b981', fillOpacity: 0.15, radius: configRadiusKm * 1000
       }).addTo(mapLive);
 
-      markerLiveUser = L.marker([appRouteData[0].lat, appRouteData[0].lng], {
+      markerLiveUser = L.marker([appRouteData[0].coordinateX, appRouteData[0].coordinateY], {
         icon: L.divIcon({ className: 'bg-emerald-600 w-4 h-4 rounded-full border-2 border-white shadow' })
       }).addTo(mapLive);
 
@@ -540,7 +551,7 @@
         }
 
         const currentPos = appRouteData[step];
-        const userLatLng = [currentPos.lat, currentPos.lng];
+        const userLatLng = [currentPos.coordinateX, currentPos.coordinateY];
         
         markerDemoUser.setLatLng(userLatLng);
         pathDemo.addLatLng(userLatLng);
@@ -548,7 +559,7 @@
 
         // Geofence Check
         appStoreData.forEach(store => {
-          const dist = getDistanceKm(currentPos.lat, currentPos.lng, store.lat, store.lng);
+          const dist = getDistanceKm(currentPos.coordinateX, currentPos.coordinateY, store.lat, store.lng);
           if (dist <= configRadiusKm && !triggeredStores.has(store.id)) {
             triggeredStores.add(store.id);
             triggerNotificationBanner(store.name, dist);
@@ -589,32 +600,46 @@
         }
 
         const currentPos = appRouteData[step];
-        const userLatLng = [currentPos.lat, currentPos.lng];
+        const userLatLng = [currentPos.coordinateX, currentPos.coordinateY];
         
         markerLiveUser.setLatLng(userLatLng);
         pathLive.addLatLng(userLatLng);
         mapLive.panTo(userLatLng);
 
         // Geofence Local Check
+        let insideFence = 0;
+        let fenceStatusText = "Outside";
+        
         appStoreData.forEach(store => {
-          const dist = getDistanceKm(currentPos.lat, currentPos.lng, store.lat, store.lng);
-          if (dist <= configRadiusKm && !triggeredStores.has(store.id)) {
-            triggeredStores.add(store.id);
-            triggerNotificationBanner(store.name, dist);
+          const dist = getDistanceKm(currentPos.coordinateX, currentPos.coordinateY, store.lat, store.lng);
+          if (dist <= configRadiusKm) {
+            insideFence = 1;
+            fenceStatusText = "Inside";
+            if (!triggeredStores.has(store.id)) {
+              triggeredStores.add(store.id);
+              triggerNotificationBanner(store.name, dist);
+            }
           }
         });
 
         // Real Streaming Transport (API POST)
         if (tenant && token) {
-          const sourceName = document.getElementById('sf-source').value.trim() || "GeofenceSource";
-          const endpoint = `https://${tenant}.api.userdomain.com/api/v1/ingest/sources/${sourceName}/LocationStream`;
+          const sourceName = document.getElementById('sf-source').value.trim() || "MobileEngagement";
+          const endpoint = `https://${tenant}/api/v1/ingest/sources/${sourceName}/LocationStream`;
           
+          // [UPDATED] 提示されたスキーマ構造(MobileEngagement)に完全準拠した送信ペイロード
           const payload = {
             data: [{
-              deviceId: "MOBILE-DEVICE-DEMO001",
-              latitude: currentPos.lat,
-              longitude: currentPos.lng,
-              timestamp: currentPos.timestamp || new Date().toISOString()
+              eventId: currentPos.eventId || `EV-${Date.now()}-${step}`,
+              category: currentPos.category || "Engagement",
+              dateTime: currentPos.dateTime || new Date().toISOString(),
+              deviceId: currentPos.deviceId || "MOBILE-DEVICE-DEMO001",
+              eventType: currentPos.eventType || "LocationUpdate",
+              sessionId: currentPos.sessionId || "SESS-99999",
+              coordinateX: currentPos.coordinateX,
+              coordinateY: currentPos.coordinateY,
+              geofenceStatus: fenceStatusText, // 動的に算出された判定ステータス
+              IsInGeofence: insideFence // 1(内) or 0(外)
             }]
           };
 
@@ -628,7 +653,9 @@
               body: JSON.stringify(payload)
             });
             if(res.ok) {
-              console.log("Data 360 Ingestion Success.");
+              console.log("Data 360 Ingestion Success:", payload.data[0]);
+            } else {
+              console.error("Data 360 Ingestion Failure:", res.statusText);
             }
           } catch (err) {
             console.error("Data 360 streaming API Error: ", err);
