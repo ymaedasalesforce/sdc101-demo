@@ -186,6 +186,12 @@
             <input type="text" id="sdk-source-id" placeholder="例: 1a2b3c4d-5e6f-..." class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-rose-500 transition">
             <p class="text-[8px] text-slate-400 mt-0.5">※ SalesforceのWeb/モバイル詳細画面に表示される「ソースID (Source ID)」を指定してください</p>
           </div>
+          <!-- 💡 【NEW】イベントAPI名(eventType)の指定用フィールド -->
+          <div>
+            <label class="text-[10px] font-bold text-slate-500">イベントAPI参照名 (eventType)</label>
+            <input type="text" id="sdk-event-type" placeholder="例: LocationUpdate" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-rose-500 transition">
+            <p class="text-[8px] text-slate-400 mt-0.5">※ Salesforce側のスキーマ設定画面で定義されている「イベントAPI名（イベントAPI参照名）」を正確に入力してください</p>
+          </div>
           <!-- SDK接続確認ボタン -->
           <button type="button" id="btn-test-sdk" class="w-full py-2 mt-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
             <i class="fa-solid fa-circle-check"></i> SDK 接続テストを送信
@@ -770,6 +776,8 @@
     document.getElementById('btn-start-sdk').addEventListener('click', () => {
       let rawSdkUrl = document.getElementById('sdk-url').value.trim();
       const sourceIdVal = document.getElementById('sdk-source-id').value.trim();
+      // 💡 [NEW] イベントAPI名を取得
+      const sdkEventTypeVal = document.getElementById('sdk-event-type').value.trim() || "LocationUpdate";
 
       if (!rawSdkUrl) {
         alert("設定画面で「SDKトラッキング送信URL」を入力してください。");
@@ -830,12 +838,12 @@
           }
         });
 
-        // sourceId を最上位に定義したSDKイベントデータ構造
+        // 💡 [NEW] eventType 項目に設定画面で指定された文字列（sdkEventTypeVal）を代入
         const payload = {
           sourceId: sourceIdVal,
           interaction: {
             name: "Location Update",
-            eventType: "LocationUpdate",
+            eventType: sdkEventTypeVal, // 指定されたストリームイベント名を動的マッピング
             parameters: {
               eventId: currentPos.eventId || `EV-${Date.now()}-${step}`,
               category: "Engagement",
@@ -845,7 +853,8 @@
               coordinateX: currentPos.coordinateX,
               coordinateY: currentPos.coordinateY,
               geofenceStatus: fenceStatusText,
-              IsInGeofence: insideFence
+              IsInGeofence: insideFence,
+              eventType: sdkEventTypeVal // パラメータ内部スキーマにも反映
             }
           }
         };
@@ -872,7 +881,7 @@
     });
 
     // ==========================================
-    // 💡 [NEW] 接続確認テスト用ロジックの実装
+    // 💡 接続確認テスト用ロジックの実装
     // ==========================================
 
     // 1. Web & Mobile SDK 接続確認
@@ -880,6 +889,8 @@
       const btn = document.getElementById('btn-test-sdk');
       const rawSdkUrl = document.getElementById('sdk-url').value.trim();
       const sourceIdVal = document.getElementById('sdk-source-id').value.trim();
+      // 💡 [NEW] テスト送信時も動的イベント名を取得
+      const sdkEventTypeVal = document.getElementById('sdk-event-type').value.trim() || "LocationUpdate";
 
       if (!rawSdkUrl || !sourceIdVal) {
         alert("SDK URLとソースIDを入力してから接続テストを送信してください。");
@@ -894,7 +905,7 @@
         sourceId: sourceIdVal,
         interaction: {
           name: "Connection Check",
-          eventType: "TestConnection",
+          eventType: sdkEventTypeVal, // 指定されたストリームイベント名を使用
           parameters: {
             eventId: `TEST-${Date.now()}`,
             category: "Engagement",
@@ -904,7 +915,8 @@
             coordinateX: 35.6835,
             coordinateY: 139.7655,
             geofenceStatus: "Outside",
-            IsInGeofence: 0
+            IsInGeofence: 0,
+            eventType: sdkEventTypeVal
           }
         }
       };
@@ -917,9 +929,9 @@
         });
 
         if (res.status === 200 || res.status === 202) {
-          alert(`【成功】SDKエンドポイントがテストを受理しました！\nステータス: ${res.status} (${res.statusText})\n\n※CORSをパスし、SalesforceのAPIへ正常に届いています。`);
+          alert(`【成功】SDKエンドポイントがテストを受理しました！\nステータス: ${res.status} (${res.statusText})\n\n※CORSおよびスキーマ認証をパスし、Salesforceへ正常に送信されました。`);
         } else {
-          alert(`【エラー】応答コード: ${res.status} (${res.statusText})\n設定またはCORS許可の設定をご確認ください。`);
+          alert(`【エラー】応答コード: ${res.status} (${res.statusText})\n\n入力されたイベントAPI参照名（${sdkEventTypeVal}）が、Salesforce側データストリームの設定値と完全に一致しているか確認してください。`);
         }
       } catch (err) {
         console.error(err);
@@ -1028,6 +1040,13 @@
       if (localStorage.getItem('sdk_source_id')) {
         document.getElementById('sdk-source-id').value = localStorage.getItem('sdk_source_id');
       }
+      // 💡 [NEW] ストレージから保存されたeventTypeを復元
+      if (localStorage.getItem('sdk_event_type')) {
+        document.getElementById('sdk-event-type').value = localStorage.getItem('sdk_event_type');
+      } else {
+        document.getElementById('sdk-event-type').value = "LocationUpdate"; // デフォルト
+      }
+
       // 入力時にローカルストレージへ自動保存するリスナー
       document.getElementById('sdk-url').addEventListener('input', (e) => {
         localStorage.setItem('sdk_url', e.target.value.trim());
@@ -1035,6 +1054,11 @@
       document.getElementById('sdk-source-id').addEventListener('input', (e) => {
         localStorage.setItem('sdk_source_id', e.target.value.trim());
       });
+      // 💡 [NEW] 変更をリアルタイム保存
+      document.getElementById('sdk-event-type').addEventListener('input', (e) => {
+        localStorage.setItem('sdk_event_type', e.target.value.trim());
+      });
+      
       initDemoMap();
     };
   </script>
