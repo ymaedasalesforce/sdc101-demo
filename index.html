@@ -181,6 +181,12 @@
             <input type="text" id="sdk-url" placeholder="例: play.c360a.salesforce.com/event" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-rose-500 transition">
             <p class="text-[8px] text-slate-400 mt-0.5">※ Salesforce側で「Webサイトおよびモバイルアプリケーション」を新規作成した際に表示されるイベント送信先エンドポイントです</p>
           </div>
+          <!-- [UPDATED] ソースID入力欄を追加 -->
+          <div>
+            <label class="text-[10px] font-bold text-slate-500">接続ソースID (Source ID)</label>
+            <input type="text" id="sdk-source-id" placeholder="例: 1a2b3c4d-5e6f-..." class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-rose-500 transition">
+            <p class="text-[8px] text-slate-400 mt-0.5">※ SalesforceのWeb/モバイル詳細画面に表示される「ソースID (Source ID)」を指定してください</p>
+          </div>
         </div>
       </div>
 
@@ -442,11 +448,11 @@
           }
         } else {
           const errData = await response.json();
-          alert(`認証エラー: ${errData.error_description || response.statusText}\n\n※CORSポリシー違反が出る場合は、Salesforce側の『CORS』設定にご自身のGitHub Pagesのドメイン（例: https://<ユーザー名>.github.io）を必ずご登録ください。`);
+          alert(`認証エラー: ${errData.error_description || response.statusText}\n\n※CORSポリシー違反が出る場合は、Salesforce側の『CORS』設定にご自身のGitHub Pages of ユーザードメインを必ずご登録ください。`);
         }
       } catch (error) {
         console.error("OAuth Token request failed", error);
-        alert("通信エラーが発生しました。接続アプリ側のCORS（クロスオリジンリソース共有）設定をご確認ください。");
+        alert("通信エラーが発生しました。接続アプリ側のCORS設定をご確認ください。");
       } finally {
         spinIcon.classList.add('hidden');
         btnText.disabled = false;
@@ -737,9 +743,14 @@
     // --- Web & Mobile SDK (Web/モバイル用自動イベント送信) Loop ---
     document.getElementById('btn-start-sdk').addEventListener('click', () => {
       let sdkUrl = document.getElementById('sdk-url').value.trim();
+      const sourceIdVal = document.getElementById('sdk-source-id').value.trim();
 
       if (!sdkUrl) {
         alert("設定画面で「SDKトラッキング送信URL」を入力してください。");
+        return;
+      }
+      if (!sourceIdVal) {
+        alert("設定画面で「接続ソースID (Source ID)」を入力してください。");
         return;
       }
 
@@ -795,9 +806,9 @@
           }
         });
 
-        // Web & Mobile SDK規格のビーコン送信 (Interactions Event POST)
-        // SDK接続ではOAuthトークン不要で、指定したエンドポイントへの直接ポスト形式になります
+        // [UPDATED] sourceId をペイロードの最上位に追加した、Web/Mobile SDK正規の送信仕様
         const payload = {
+          sourceId: sourceIdVal, // 画面から取得したSource IDをマッピング
           interaction: {
             name: "Location Update",
             eventType: "LocationUpdate",
@@ -876,9 +887,15 @@
       if (localStorage.getItem('sdk_url')) {
         document.getElementById('sdk-url').value = localStorage.getItem('sdk_url');
       }
-      // SDKトラッキング送信URLが入力されたら自動保存
+      if (localStorage.getItem('sdk_source_id')) {
+        document.getElementById('sdk-source-id').value = localStorage.getItem('sdk_source_id');
+      }
+      // 入力時にローカルストレージへ自動保存するリスナー
       document.getElementById('sdk-url').addEventListener('input', (e) => {
         localStorage.setItem('sdk_url', e.target.value.trim());
+      });
+      document.getElementById('sdk-source-id').addEventListener('input', (e) => {
+        localStorage.setItem('sdk_source_id', e.target.value.trim());
       });
       initDemoMap();
     };
