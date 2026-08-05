@@ -655,13 +655,6 @@
 
     // --- Helper function to fix Web/Mobile SDK endpoint URLs ---
     function formatSdkUrl(rawUrl) {
-      let url = rawUrl.trim();
-      if (!url) return "";
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-      }
-      return url;
-    }
 
     // --- Ingestion API (取り込みAPI) Streaming Integration Loop ---
     document.getElementById('btn-start-live').addEventListener('click', () => {
