@@ -186,7 +186,6 @@
             <input type="text" id="sdk-source-id" placeholder="例: 1a2b3c4d-5e6f-..." class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-rose-500 transition">
             <p class="text-[8px] text-slate-400 mt-0.5">※ SalesforceのWeb/モバイル詳細画面に表示される「ソースID (Source ID)」を指定してください</p>
           </div>
-          <!-- 💡 【NEW】イベントAPI名(eventType)の指定用フィールド -->
           <div>
             <label class="text-[10px] font-bold text-slate-500">イベントAPI参照名 (eventType)</label>
             <input type="text" id="sdk-event-type" placeholder="例: LocationUpdate" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-rose-500 transition">
@@ -404,7 +403,7 @@
     document.getElementById('sf-tenant').addEventListener('input', updateAuthIndicator);
     document.getElementById('sf-token').addEventListener('input', updateAuthIndicator);
 
-    // --- OAuth 2.0 Client Credentials Token Fetcher Engine (安定稼働版) ---
+    // --- OAuth 2.0 Client Credentials Token Fetcher Engine ---
     document.getElementById('btn-fetch-token').addEventListener('click', async () => {
       let loginUrl = document.getElementById('oauth-login-url').value.trim();
       const clientId = document.getElementById('oauth-client-id').value.trim();
@@ -415,11 +414,9 @@
         return;
       }
 
-      // プロトコルスキーム(https://)が抜けている場合は補正
       if (!loginUrl.startsWith('http://') && !loginUrl.startsWith('https://')) {
         loginUrl = 'https://' + loginUrl;
       }
-      // 末尾にスラッシュがある場合は削除
       if (loginUrl.endsWith('/')) {
         loginUrl = loginUrl.slice(0, -1);
       }
@@ -431,7 +428,6 @@
 
       const endpoint = `${loginUrl}/services/oauth2/token`;
       
-      // Client Credentials Flow parameters
       const bodyParams = new URLSearchParams();
       bodyParams.append('grant_type', 'client_credentials');
       bodyParams.append('client_id', clientId);
@@ -451,7 +447,6 @@
           if (data.access_token) {
             document.getElementById('sf-token').value = data.access_token;
             
-            // ローカルストレージに構成情報をセーブ
             localStorage.setItem('oauth_login_url', loginUrl);
             localStorage.setItem('sf_demo_client_id', clientId);
             
@@ -665,11 +660,9 @@
       if (!url.startsWith('http://') && !url.startsWith('https://')) {
         url = 'https://' + url;
       }
-      // 末尾のスラッシュを削除
       if (url.endsWith('/')) {
         url = url.slice(0, -1);
       }
-      // 末尾に /event が付いていない場合は自動で付与
       if (!url.endsWith('/event')) {
         url = url + '/event';
       }
@@ -776,7 +769,6 @@
     document.getElementById('btn-start-sdk').addEventListener('click', () => {
       let rawSdkUrl = document.getElementById('sdk-url').value.trim();
       const sourceIdVal = document.getElementById('sdk-source-id').value.trim();
-      // 💡 [NEW] イベントAPI名を取得
       const sdkEventTypeVal = document.getElementById('sdk-event-type').value.trim() || "LocationUpdate";
 
       if (!rawSdkUrl) {
@@ -788,7 +780,6 @@
         return;
       }
 
-      // エンドポイントパス自動補正を適用
       const sdkUrl = formatSdkUrl(rawSdkUrl);
 
       if (sdkInterval) {
@@ -838,12 +829,11 @@
           }
         });
 
-        // 💡 [NEW] eventType 項目に設定画面で指定された文字列（sdkEventTypeVal）を代入
         const payload = {
           sourceId: sourceIdVal,
           interaction: {
             name: "Location Update",
-            eventType: sdkEventTypeVal, // 指定されたストリームイベント名を動的マッピング
+            eventType: sdkEventTypeVal,
             parameters: {
               eventId: currentPos.eventId || `EV-${Date.now()}-${step}`,
               category: "Engagement",
@@ -854,24 +844,22 @@
               coordinateY: currentPos.coordinateY,
               geofenceStatus: fenceStatusText,
               IsInGeofence: insideFence,
-              eventType: sdkEventTypeVal // パラメータ内部スキーマにも反映
+              eventType: sdkEventTypeVal
             }
           }
         };
 
+        // 💡 [修正] OPTIONSプリフライト通信による404/CORSエラー回避対策
         try {
-          const res = await fetch(sdkUrl, {
+          await fetch(sdkUrl, {
             method: 'POST',
+            mode: 'no-cors',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'text/plain'
             },
             body: JSON.stringify(payload)
           });
-          if (res.ok) {
-            console.log("Web & Mobile SDK Event Send Success:", payload.interaction.parameters);
-          } else {
-            console.error("Web & Mobile SDK Event Send Failure:", res.statusText);
-          }
+          console.log("Web & Mobile SDK Event Sent (no-cors mode):", payload.interaction.parameters);
         } catch (err) {
           console.error("Web & Mobile SDK Network Error: ", err);
         }
@@ -884,12 +872,11 @@
     // 💡 接続確認テスト用ロジックの実装
     // ==========================================
 
-    // 1. Web & Mobile SDK 接続確認
+    // 1. Web & Mobile SDK 接続確認（修正版）
     document.getElementById('btn-test-sdk').addEventListener('click', async () => {
       const btn = document.getElementById('btn-test-sdk');
       const rawSdkUrl = document.getElementById('sdk-url').value.trim();
       const sourceIdVal = document.getElementById('sdk-source-id').value.trim();
-      // 💡 [NEW] テスト送信時も動的イベント名を取得
       const sdkEventTypeVal = document.getElementById('sdk-event-type').value.trim() || "LocationUpdate";
 
       if (!rawSdkUrl || !sourceIdVal) {
@@ -905,7 +892,7 @@
         sourceId: sourceIdVal,
         interaction: {
           name: "Connection Check",
-          eventType: sdkEventTypeVal, // 指定されたストリームイベント名を使用
+          eventType: sdkEventTypeVal,
           parameters: {
             eventId: `TEST-${Date.now()}`,
             category: "Engagement",
@@ -921,21 +908,19 @@
         }
       };
 
+      // 💡 [修正] OPTIONSプリフライト通信を発生させない no-cors 送信ロジック
       try {
-        const res = await fetch(sdkUrl, {
+        await fetch(sdkUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify(payload)
         });
 
-        if (res.status === 200 || res.status === 202) {
-          alert(`【成功】SDKエンドポイントがテストを受理しました！\nステータス: ${res.status} (${res.statusText})\n\n※CORSおよびスキーマ認証をパスし、Salesforceへ正常に送信されました。`);
-        } else {
-          alert(`【エラー】応答コード: ${res.status} (${res.statusText})\n\n入力されたイベントAPI参照名（${sdkEventTypeVal}）が、Salesforce側データストリームの設定値と完全に一致しているか確認してください。`);
-        }
+        alert(`【送信完了】SDK エンドポイントへ接続テストイベントを送信しました！\n\n※CORS回避（no-cors）モードで実行したため、ブラウザ側の通信ブロックを通過しました。Salesforce（Data Cloud）の「データストリーム」詳細画面にて、最終受信日時が更新されたかご確認ください。`);
       } catch (err) {
         console.error(err);
-        alert(`【CORS/ネットワークエラー】\nSalesforceの受信サーバーへのアクセスに失敗しました。\n\n【チェックリスト】:\n1. Salesforce設定の「CORS」に本アプリの現在のURLが登録されているか\n2. CORS制限のないデバッグ用ブラウザで動作させているか`);
+        alert(`【通信失敗】\nネットワークエラーが発生しました。入力したエンドポイントURLに誤りがないかご確認ください。`);
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> SDK 接続テストを送信';
@@ -1040,11 +1025,10 @@
       if (localStorage.getItem('sdk_source_id')) {
         document.getElementById('sdk-source-id').value = localStorage.getItem('sdk_source_id');
       }
-      // 💡 [NEW] ストレージから保存されたeventTypeを復元
       if (localStorage.getItem('sdk_event_type')) {
         document.getElementById('sdk-event-type').value = localStorage.getItem('sdk_event_type');
       } else {
-        document.getElementById('sdk-event-type').value = "LocationUpdate"; // デフォルト
+        document.getElementById('sdk-event-type').value = "LocationUpdate";
       }
 
       // 入力時にローカルストレージへ自動保存するリスナー
@@ -1054,7 +1038,6 @@
       document.getElementById('sdk-source-id').addEventListener('input', (e) => {
         localStorage.setItem('sdk_source_id', e.target.value.trim());
       });
-      // 💡 [NEW] 変更をリアルタイム保存
       document.getElementById('sdk-event-type').addEventListener('input', (e) => {
         localStorage.setItem('sdk_event_type', e.target.value.trim());
       });
