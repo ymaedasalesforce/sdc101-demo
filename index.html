@@ -153,17 +153,17 @@
         </div>
         <div class="flex flex-col gap-2.5">
           <div>
-            <label class="text-[10px] font-bold text-slate-500">SDK トラッキング送信URL</label>
+            <label for="sdk-url" class="text-[10px] font-bold text-slate-500">SDK トラッキング送信URL (エンドポイント)</label>
             <input type="text" id="sdk-url" placeholder="例: gqytg9l0gfsd0zlfgy3gmyzwg0.c360a.salesforce.com" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-rose-500 transition">
-            <p class="text-[8px] text-slate-400 mt-0.5">※ https:// や末尾の /event は未入力でも自動で補正・追加されます</p>
+            <p class="text-[8px] text-slate-400 mt-0.5">※ Salesforce 画面に表示されているエンドポイント URL をそのまま入力してください</p>
           </div>
           <div>
-            <label class="text-[10px] font-bold text-slate-500">接続ソースID (Source ID)</label>
+            <label for="sdk-source-id" class="text-[10px] font-bold text-slate-500">接続ソースID (Source ID)</label>
             <input type="text" id="sdk-source-id" placeholder="例: 33b13ecb-1f83-4c30-989a-ce88b0961af6" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-rose-500 transition">
             <p class="text-[8px] text-slate-400 mt-0.5">※ Salesforceのモバイルアプリ用ソースIDを入力してください</p>
           </div>
           <div>
-            <label class="text-[10px] font-bold text-slate-500">イベントAPI参照名 (eventType)</label>
+            <label for="sdk-event-type" class="text-[10px] font-bold text-slate-500">イベントAPI参照名 (eventType)</label>
             <input type="text" id="sdk-event-type" placeholder="例: MobileEngagement" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-rose-500 transition">
             <p class="text-[8px] text-slate-400 mt-0.5">※ Salesforce側で定義されたイベントAPI参照名を入力してください</p>
           </div>
@@ -452,24 +452,19 @@
       }, 2500);
     });
 
-    // 💡 【核心補正関数】https:// の補正および末尾 / の削除、/event の付与を確実に実行
+    // 💡【修正】/event を付加せず、入力された URL そのまま（https:// の付与と末尾スラッシュの削除のみ）を利用するフォーマット関数
     function formatSdkUrl(rawUrl) {
       let url = rawUrl.trim();
       if (!url) return "";
       
-      // 1. プロトコルの補正
+      // 1. プロトコル（https://）の記載がない場合は補正
       if (!url.startsWith('http://') && !url.startsWith('https://')) {
         url = 'https://' + url;
       }
       
-      // 2. 末尾の不要なスラッシュの除去
+      // 2. 末尾のスラッシュ（/）を除去
       while (url.endsWith('/')) {
         url = url.slice(0, -1);
-      }
-      
-      // 3. 末尾に /event がない場合は追記
-      if (!url.endsWith('/event')) {
-        url = url + '/event';
       }
       
       return url;
@@ -490,7 +485,7 @@
         return;
       }
 
-      // 自動補正の適用
+      // 入力URLを整形（/event は付加されません）
       const sdkUrl = formatSdkUrl(rawSdkUrl);
 
       if (sdkInterval) {
@@ -575,7 +570,7 @@
             },
             body: JSON.stringify(payload)
           });
-          console.log("Mobile App Event Sent (no-cors mode) ->", sdkUrl, payload.interaction.parameters);
+          console.log("Mobile App Event Sent ->", sdkUrl, payload.interaction.parameters);
         } catch (err) {
           console.error("Web & Mobile SDK Network Error: ", err);
         }
@@ -596,7 +591,6 @@
         return;
       }
 
-      // 自動補正を適用した送信先URL
       const sdkUrl = formatSdkUrl(rawSdkUrl);
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> 送信中...';
@@ -635,7 +629,7 @@
           body: JSON.stringify(payload)
         });
 
-        alert(`【送信完了】補正された送信先エンドポイントへイベントを送信しました！\n\n送信先: ${sdkUrl}\n\nSalesforce（Data Cloud）の「データストリーム」詳細画面にて、最新レコードが届いているかご確認ください。`);
+        alert(`【送信完了】指定されたエンドポイントへイベントを送信しました！\n\n送信先: ${sdkUrl}\n\nSalesforce（Data Cloud）の「データストリーム」詳細画面にて、最新レコードが届いているかご確認ください。`);
       } catch (err) {
         console.error(err);
         alert(`【通信失敗】\nネットワークエラーが発生しました。`);
