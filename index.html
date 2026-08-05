@@ -10,11 +10,11 @@
         h1 { font-size: 20px; margin-top: 0; color: #0176d3; border-bottom: 2px solid #e0e5ee; padding-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: bold; font-size: 13px; margin-bottom: 5px; color: #514f4d; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid #dddbda; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-        textarea { font-family: monospace; height: 180px; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #dddbda; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        textarea { font-family: monospace; height: 150px; }
         button { width: 100%; background: #0176d3; color: white; border: none; padding: 12px; border-radius: 4px; font-size: 15px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         button:hover { background: #014486; }
-        #status { margin-top: 20px; padding: 12px; border-radius: 4px; display: none; font-size: 14px; font-weight: 500; }
+        #status { margin-top: 20px; padding: 12px; border-radius: 4px; display: none; font-size: 14px; font-weight: 500; white-space: pre-wrap; }
         .success { background: #e7f4e8; color: #2e7d32; border: 1px solid #c8e6c9; }
         .error { background: #fdf0ed; color: #ea001e; border: 1px solid #fbc7c3; }
         .notice { font-size: 12px; color: #747474; margin-top: 15px; background: #f3f3f3; padding: 10px; border-radius: 4px; }
@@ -26,8 +26,17 @@
     <h1>Data 360 モバイルSDK モック送信機 (直接送信版)</h1>
     
     <div class="form-group">
-        <label for="endpoint">テナント固有エンドポイント (Tenant Specific Endpoint URL)</label>
-        <input type="text" id="endpoint" placeholder="https://salesforce.com">
+        <label for="endpoint">テナント固有ベースドメイン (Base URL)</label>
+        <input type="text" id="endpoint" placeholder="例: https://gqytg9l0gfsd0zlfgy3gmyzwg0.c360a.salesforce.com">
+    </div>
+
+    <div class="form-group">
+        <label for="apiPath">APIエンドポイント・パス選択 (404回避用)</label>
+        <select id="apiPath">
+            <option value="/v1/interactions">パターンA: /v1/interactions (標準)</option>
+            <option value="/api/v1/interaction/">パターンB: /api/v1/interaction/ (レガシー)</option>
+            <option value="/v1/event">パターンC: /v1/event</option>
+        </select>
     </div>
 
     <div class="form-group">
@@ -36,7 +45,7 @@
     </div>
 
     <div class="form-group">
-        <label for="payload">送信ペイロード (JSON) ※定義したスキーマに合わせて修正してください</label>
+        <label for="payload">送信ペイロード (JSON)</label>
         <textarea id="payload">{
   "eventType": "track",
   "payload": {
@@ -54,55 +63,52 @@
     <div id="status"></div>
 
     <div class="notice">
-        ⚠️ <strong>注意:</strong> プロキシを介さず直接送信するため、ブラウザのCORS制限を受けます。送信前にブラウザのCORS回避拡張機能を有効にしてください。また、エンドポイントの先頭には必ず <code>https://</code> を含めて入力してください。
+        💡 <strong>404が出た場合:</strong> 「APIエンドポイント・パス選択」のプルダウンを切り替えて再度お試しください。送信前にブラウザのCORS回避拡張機能がONになっていることを確認してください。
     </div>
 </div>
 
 <script>
 function sendMockData() {
     let baseUrl = document.getElementById('endpoint').value.trim();
+    const apiPath = document.getElementById('apiPath').value;
     const appSourceId = document.getElementById('appSourceId').value.trim();
     const payloadInput = document.getElementById('payload').value.trim();
     const statusDiv = document.getElementById('status');
 
-    // ステータスの初期化
     statusDiv.style.display = "none";
     statusDiv.className = "";
 
-    // 入力チェック
     if (!baseUrl || !appSourceId || !payloadInput) {
         showStatus("すべての項目を入力してください。", "error");
         return;
     }
 
-    // URLの自動補正（https:// が抜けていたら自動付与）
+    // https:// の補正
     if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
         baseUrl = 'https://' + baseUrl;
     }
 
-    // URLの末尾調整（/v1/event パスを強制付与）
-    if (!baseUrl.endsWith('/v1/event')) {
-        baseUrl = baseUrl.replace(/\/$/, '') + '/v1/event';
-    }
+    // ドメイン末尾のスラッシュや余計なパスをクレンジングしてベースURLを抽出
+    const urlObj = new URL(baseUrl);
+    const finalUrl = urlObj.origin + apiPath;
 
-    // ペイロードの組み立て
     let userPayload;
     try {
         userPayload = JSON.parse(payloadInput);
     } catch (e) {
-        showStatus("JSONの形式が正しくありません。構文を確認してください。", "error");
+        showStatus("JSONの形式が正しくありません。", "error");
         return;
     }
 
-    // モバイルSDKの通信に必要な共通パラメータをマージ
     const finalPayload = {
         "appSourceId": appSourceId,
         "eventTime": new Date().toISOString(),
         ...userPayload
     };
 
-    // Data 360 へ直接POSTリクエストを送信
-    fetch(baseUrl, {
+    showStatus("送信中...", "success");
+
+    fetch(finalUrl, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -111,14 +117,14 @@ function sendMockData() {
     })
     .then(response => {
         if (response.ok) {
-            showStatus(`✅ 送信成功！ ステータス: ${response.status} (${response.statusText})`, "success");
+            showStatus(`✅ 送信成功！\n送信先URL: ${finalUrl}\nステータス: ${response.status} (${response.statusText})`, "success");
         } else {
-            showStatus(`❌ 送信失敗。Data 360側がエラーを返しました。 ステータス: ${response.status}`, "error");
+            showStatus(`❌ 送信失敗。サーバーがエラーを返しました。\n送信先URL: ${finalUrl}\nステータス: ${response.status} (${response.statusText})\n\n※404の場合はパス選択肢を切り替えてみてください。`, "error");
         }
     })
     .catch(error => {
         console.error("通信エラー詳細:", error);
-        showStatus("❌ 通信エラー。CORS制限（Cross-Origin）によってブラウザが通信を遮断したか、URLが正しくありません。ブラウザのデベロッパーツール（F12）のコンソールログを確認してください。", "error");
+        showStatus("❌ 通信エラーが発生しました。コンソールログをご確認ください。", "error");
     });
 }
 
