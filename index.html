@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Salesforce Data 360 Map Demo</title>
+  <title>Salesforce Data 360 Mobile SDK Map Demo</title>
   <!-- Tailwind CSS & FontAwesome for Polished UI -->
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -81,31 +81,8 @@
       </div>
     </div>
 
-
     <!-- ==========================================
-         SCREEN 2: STREAMING SCREEN (取り込みAPIストリーミング)
-         ========================================== -->
-    <div id="screen-live" class="hidden flex-1 flex flex-col relative">
-      <div id="map-live" class="w-full flex-1 z-10"></div>
-      
-      <!-- Stream Control Bar Overlay -->
-      <div class="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur p-3.5 rounded-2xl shadow-lg z-20 border border-slate-100 flex flex-col gap-2">
-        <div class="flex justify-between items-center">
-          <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Ingestion API ストリーミング
-          </span>
-          <span id="live-status" class="text-[10px] text-slate-400 font-mono">停止中</span>
-        </div>
-        <button id="btn-start-live" class="w-full py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-1.5 shadow-sm">
-          <i class="fa-solid fa-bolt"></i> ストリーミング開始
-        </button>
-      </div>
-    </div>
-
-
-    <!-- ==========================================
-         SCREEN 2-B: WEB & MOBILE SDK SCREEN (SDK自動イベント送信)
+         SCREEN 2: WEB & MOBILE SDK SCREEN (SDK自動イベント送信)
          ========================================== -->
     <div id="screen-sdk" class="hidden flex-1 flex flex-col relative">
       <div id="map-sdk" class="w-full flex-1 z-10"></div>
@@ -125,14 +102,13 @@
       </div>
     </div>
 
-
     <!-- ==========================================
          SCREEN 3: SETTINGS (設定画面)
          ========================================== -->
     <div id="screen-upload" class="hidden flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
       <div class="text-center mt-2">
         <h2 class="text-xl font-bold text-slate-800">設定画面</h2>
-        <p class="text-xs text-slate-500 mt-0.5">各種データおよび接続情報の設定</p>
+        <p class="text-xs text-slate-500 mt-0.5">Mobile SDK 接続情報およびデータの設定</p>
       </div>
 
       <!-- Store Configuration Card -->
@@ -173,18 +149,18 @@
       <!-- Web & Mobile SDK Settings Card -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3">
         <div class="flex justify-between items-center text-rose-600 font-semibold text-sm">
-          <span class="flex items-center gap-2"><i class="fa-solid fa-code"></i> 1. Web & Mobile SDK 設定 (モバイルアプリ構成)</span>
+          <span class="flex items-center gap-2"><i class="fa-solid fa-code"></i> Mobile SDK 接続設定</span>
         </div>
         <div class="flex flex-col gap-2.5">
           <div>
             <label class="text-[10px] font-bold text-slate-500">SDK トラッキング送信URL</label>
-            <input type="text" id="sdk-url" placeholder="例: https://play.c360a.salesforce.com/event" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-rose-500 transition">
-            <p class="text-[8px] text-slate-400 mt-0.5">※ Salesforceのモバイルアプリ用データストリームで指定されたトラッキングURLを入力してください</p>
+            <input type="text" id="sdk-url" placeholder="例: gqytg9l0gfsd0zlfgy3gmyzwg0.c360a.salesforce.com" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-rose-500 transition">
+            <p class="text-[8px] text-slate-400 mt-0.5">※ https:// や末尾の /event は未入力でも自動で補正・追加されます</p>
           </div>
           <div>
             <label class="text-[10px] font-bold text-slate-500">接続ソースID (Source ID)</label>
             <input type="text" id="sdk-source-id" placeholder="例: 33b13ecb-1f83-4c30-989a-ce88b0961af6" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-rose-500 transition">
-            <p class="text-[8px] text-slate-400 mt-0.5">※ Salesforceの「ソース ID」を入力してください</p>
+            <p class="text-[8px] text-slate-400 mt-0.5">※ Salesforceのモバイルアプリ用ソースIDを入力してください</p>
           </div>
           <div>
             <label class="text-[10px] font-bold text-slate-500">イベントAPI参照名 (eventType)</label>
@@ -193,62 +169,7 @@
           </div>
           <!-- SDK接続確認ボタン -->
           <button type="button" id="btn-test-sdk" class="w-full py-2 mt-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
-            <i class="fa-solid fa-circle-check"></i> SDK 接続テストを送信 (モバイル構造)
-          </button>
-        </div>
-      </div>
-
-      <!-- Salesforce API Settings Card (Ingestion API) -->
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3">
-        <div class="flex justify-between items-center text-emerald-600 font-semibold text-sm">
-          <span class="flex items-center gap-2"><i class="fa-solid fa-plug"></i> 2. Ingestion API 接続設定</span>
-          <span id="sf-status" class="text-[10px] text-rose-500 font-bold bg-rose-50 px-2 py-0.5 rounded">未認証</span>
-        </div>
-        <div class="flex flex-col gap-2.5">
-          <!-- OAuth Auto-Token Fetching Panel -->
-          <details class="bg-slate-50 p-2.5 rounded-xl border border-slate-150 text-xs">
-            <summary class="font-bold text-slate-600 cursor-pointer flex items-center justify-between">
-              <span><i class="fa-solid fa-key mr-1 text-indigo-500"></i> OAuthトークン自動取得（Client Credentials）</span>
-              <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
-            </summary>
-            <div class="flex flex-col gap-2 pt-2 mt-2 border-t border-slate-200">
-              <div>
-                <label class="text-[9px] font-bold text-slate-400 uppercase">ログイン環境 (URL / 私のドメイン)</label>
-                <input type="text" id="oauth-login-url" placeholder="例: https://yourdomain.my.salesforce.com" class="w-full mt-0.5 px-2 py-1 border border-slate-200 rounded text-xs bg-white focus:outline-none">
-              </div>
-              <div>
-                <label class="text-[9px] font-bold text-slate-400 uppercase">クライアントID (Consumer Key)</label>
-                <input type="text" id="oauth-client-id" placeholder="接続アプリのConsumer Key" class="w-full mt-0.5 px-2 py-1 border border-slate-200 rounded text-xs bg-white focus:outline-none">
-              </div>
-              <div>
-                <label class="text-[9px] font-bold text-slate-400 uppercase">クライアントシークレット (Consumer Secret)</label>
-                <input type="password" id="oauth-client-secret" placeholder="接続アプリのConsumer Secret" class="w-full mt-0.5 px-2 py-1 border border-slate-200 rounded text-xs bg-white focus:outline-none">
-              </div>
-              <button type="button" id="btn-fetch-token" class="w-full py-1.5 mt-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold transition flex items-center justify-center gap-1">
-                <i class="fa-solid fa-arrows-rotate animate-spin hidden" id="token-spin"></i> OAuthトークンを取得
-              </button>
-            </div>
-          </details>
-
-          <hr class="border-slate-100 my-0.5">
-
-          <!-- Core API Target Configuration -->
-          <div>
-            <label class="text-[10px] font-bold text-slate-500">テナント特定エンドポイントURL</label>
-            <input type="text" id="sf-tenant" placeholder="例: m7xxxx.api.userdomain.com" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-emerald-500 transition">
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-500">アクセストークン (Bearer Token)</label>
-            <input type="password" id="sf-token" placeholder="アクセストークンがここに自動入力されます" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-emerald-500 transition">
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-500">インジェクションAPI 接続名 (ソース名)</label>
-            <input type="text" id="sf-source" placeholder="MobileEngagement" class="w-full mt-0.5 px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-emerald-500 transition">
-          </div>
-          
-          <!-- Ingestion API接続確認ボタン -->
-          <button type="button" id="btn-test-ingest" class="w-full py-2 mt-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
-            <i class="fa-solid fa-cloud-arrow-up"></i> Ingestion API 接続テストを送信
+            <i class="fa-solid fa-circle-check"></i> SDK 接続テストを送信
           </button>
         </div>
       </div>
@@ -260,13 +181,11 @@
       </div>
     </div>
 
-
     <!-- ==========================================
          COUPON DETAIL MODAL (タップ後に開く詳細画面)
          ========================================== -->
     <div id="coupon-modal" class="hidden absolute inset-0 bg-black/60 z-[10000] flex items-center justify-center p-6 animate-fade-in">
       <div class="bg-white w-full rounded-3xl p-6 text-center shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col items-center gap-4 relative overflow-hidden">
-        <!-- Top decorative banner -->
         <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-amber-400 to-rose-500"></div>
         <div class="h-14 w-14 bg-amber-50 rounded-full flex items-center justify-center text-2xl text-amber-500 mt-2">
           <i class="fa-solid fa-ticket-simple"></i>
@@ -285,22 +204,17 @@
       </div>
     </div>
 
-
     <!-- ==========================================
-         GLOBAL FOOTER NAVIGATION BAR (ハイブリッドタブ構成)
+         GLOBAL FOOTER NAVIGATION BAR (3タブ構成)
          ========================================== -->
     <div class="h-20 bg-white border-t border-slate-100 flex items-center justify-around pb-4 pt-2 z-50 shrink-0">
       <button onclick="switchScreen('demo')" id="nav-demo" class="flex flex-col items-center gap-1 text-indigo-600 font-medium">
         <i class="text-lg fa-solid fa-square-play"></i>
         <span class="text-[10px]">デモ</span>
       </button>
-      <button onclick="switchScreen('live')" id="nav-live" class="flex flex-col items-center gap-1 text-slate-400 font-medium">
-        <i class="text-lg fa-solid fa-satellite-dish"></i>
-        <span class="text-[10px]">Ingestion API</span>
-      </button>
       <button onclick="switchScreen('sdk')" id="nav-sdk" class="flex flex-col items-center gap-1 text-slate-400 font-medium">
         <i class="text-lg fa-solid fa-mobile-screen"></i>
-        <span class="text-[10px]">Web/Mobile SDK</span>
+        <span class="text-[10px]">Mobile SDK</span>
       </button>
       <button onclick="switchScreen('upload')" id="nav-upload" class="flex flex-col items-center gap-1 text-slate-400 font-medium">
         <i class="text-lg fa-solid fa-gear"></i>
@@ -314,40 +228,34 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   
   <script>
-    // --- Sample Default Data (スキーマ定義「MobileEngagement」準拠) ---
+    // --- Sample Default Data ---
     const defaultStore = { id: "S01", name: "Salesforceタワー東京丸の内", lat: 35.6835, lng: 139.7655 };
     const defaultRoute = [
       { eventId: "EV-10001", category: "Engagement", dateTime: "2026-07-16T13:00:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6780, coordinateY: 139.7680, geofenceStatus: "Outside", IsInGeofence: 0 },
       { eventId: "EV-10002", category: "Engagement", dateTime: "2026-07-16T13:02:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6800, coordinateY: 139.7670, geofenceStatus: "Outside", IsInGeofence: 0 },
       { eventId: "EV-10003", category: "Engagement", dateTime: "2026-07-16T13:04:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6820, coordinateY: 139.7662, geofenceStatus: "Outside", IsInGeofence: 0 },
-      { eventId: "EV-10004", category: "Engagement", dateTime: "2026-07-16T13:06:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6836, coordinateY: 139.7654, geofenceStatus: "Inside", IsInGeofence: 1 }, // Within fence
+      { eventId: "EV-10004", category: "Engagement", dateTime: "2026-07-16T13:06:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6836, coordinateY: 139.7654, geofenceStatus: "Inside", IsInGeofence: 1 },
       { eventId: "EV-10005", category: "Engagement", dateTime: "2026-07-16T13:08:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6850, coordinateY: 139.7640, geofenceStatus: "Outside", IsInGeofence: 0 },
       { eventId: "EV-10006", category: "Engagement", dateTime: "2026-07-16T13:10:00Z", deviceId: "MOBILE-DEVICE-DEMO001", eventType: "LocationUpdate", sessionId: "SESS-99999", coordinateX: 35.6870, coordinateY: 139.7630, geofenceStatus: "Outside", IsInGeofence: 0 }
     ];
 
-    // Current app operational states
     let appStoreData = [defaultStore];
     let appRouteData = [...defaultRoute];
     let configRadiusKm = 0.5;
 
-    // --- Active Cached Notification Object ---
     let activeNotificationStoreName = "";
-
-    // --- Geofence First-Time Capture Memory ---
     let triggeredStores = new Set();
 
-    // Maps global instances
-    let mapDemo = null, mapLive = null, mapSdk = null;
-    let markerDemoStore = null, markerLiveStore = null, markerSdkStore = null;
-    let markerDemoUser = null, markerLiveUser = null, markerSdkUser = null;
-    let pathDemo = null, pathLive = null, pathSdk = null;
-    let circleDemo = null, circleLive = null, circleSdk = null;
+    let mapDemo = null, mapSdk = null;
+    let markerDemoStore = null, markerSdkStore = null;
+    let markerDemoUser = null, markerSdkUser = null;
+    let pathDemo = null, pathSdk = null;
+    let circleDemo = null, circleSdk = null;
 
     let demoInterval = null;
-    let liveInterval = null;
     let sdkInterval = null;
 
-    // --- Clock Synchronization Engine ---
+    // --- Clock Engine ---
     function updateLiveClock() {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
@@ -361,112 +269,25 @@
     function switchScreen(screenId) {
       document.getElementById('screen-upload').classList.add('hidden');
       document.getElementById('screen-demo').classList.add('hidden');
-      document.getElementById('screen-live').classList.add('hidden');
       document.getElementById('screen-sdk').classList.add('hidden');
 
       document.getElementById('nav-upload').className = "flex flex-col items-center gap-1 text-slate-400 font-medium";
       document.getElementById('nav-demo').className = "flex flex-col items-center gap-1 text-slate-400 font-medium";
-      document.getElementById('nav-live').className = "flex flex-col items-center gap-1 text-slate-400 font-medium";
       document.getElementById('nav-sdk').className = "flex flex-col items-center gap-1 text-slate-400 font-medium";
 
       document.getElementById(`screen-${screenId}`).classList.remove('hidden');
       
       let activeColor = 'indigo';
-      if (screenId === 'live') activeColor = 'emerald';
       if (screenId === 'sdk') activeColor = 'rose';
       
       document.getElementById(`nav-${screenId}`).className = `flex flex-col items-center gap-1 text-${activeColor}-600 font-medium`;
 
       if (screenId === 'demo') {
         initDemoMap();
-      } else if (screenId === 'live') {
-        initLiveMap();
       } else if (screenId === 'sdk') {
         initSdkMap();
       }
     }
-
-    // --- Live Event Authentication Listeners (Settings Page Sync) ---
-    function updateAuthIndicator() {
-      const tenant = document.getElementById('sf-tenant').value.trim();
-      const token = document.getElementById('sf-token').value.trim();
-      const statusEl = document.getElementById('sf-status');
-      
-      if (tenant && token) {
-        statusEl.innerText = "接続設定完了";
-        statusEl.className = "text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded";
-      } else {
-        statusEl.innerText = "未認証";
-        statusEl.className = "text-[10px] text-rose-500 font-bold bg-rose-50 px-2 py-0.5 rounded";
-      }
-    }
-    document.getElementById('sf-tenant').addEventListener('input', updateAuthIndicator);
-    document.getElementById('sf-token').addEventListener('input', updateAuthIndicator);
-
-    // --- OAuth 2.0 Client Credentials Token Fetcher Engine ---
-    document.getElementById('btn-fetch-token').addEventListener('click', async () => {
-      let loginUrl = document.getElementById('oauth-login-url').value.trim();
-      const clientId = document.getElementById('oauth-client-id').value.trim();
-      const clientSecret = document.getElementById('oauth-client-secret').value.trim();
-
-      if (!loginUrl || !clientId || !clientSecret) {
-        alert("OAuth自動取得に必要なすべてのフィールドを入力してください。");
-        return;
-      }
-
-      if (!loginUrl.startsWith('http://') && !loginUrl.startsWith('https://')) {
-        loginUrl = 'https://' + loginUrl;
-      }
-      if (loginUrl.endsWith('/')) {
-        loginUrl = loginUrl.slice(0, -1);
-      }
-
-      const spinIcon = document.getElementById('token-spin');
-      const btnText = document.getElementById('btn-fetch-token');
-      spinIcon.classList.remove('hidden');
-      btnText.disabled = true;
-
-      const endpoint = `${loginUrl}/services/oauth2/token`;
-      
-      const bodyParams = new URLSearchParams();
-      bodyParams.append('grant_type', 'client_credentials');
-      bodyParams.append('client_id', clientId);
-      bodyParams.append('client_secret', clientSecret);
-
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: bodyParams
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.access_token) {
-            document.getElementById('sf-token').value = data.access_token;
-            
-            localStorage.setItem('oauth_login_url', loginUrl);
-            localStorage.setItem('sf_demo_client_id', clientId);
-            
-            updateAuthIndicator();
-            alert("OAuthトークンの取得に成功しました！接続設定にトークンがセットされました。");
-          } else {
-            alert("トークンの発行に失敗しました。レスポンスデータを確認してください。");
-          }
-        } else {
-          const errData = await response.json();
-          alert(`認証エラー: ${errData.error_description || response.statusText}`);
-        }
-      } catch (error) {
-        console.error("OAuth Token request failed", error);
-        alert("通信エラーが発生しました。");
-      } finally {
-        spinIcon.classList.add('hidden');
-        btnText.disabled = false;
-      }
-    });
 
     // --- Geofence Radius Slider Sync ---
     document.getElementById('geofence-radius').addEventListener('input', (e) => {
@@ -478,11 +299,10 @@
     function updateGeofenceCircles() {
       const radiusMeters = configRadiusKm * 1000;
       if (circleDemo) circleDemo.setRadius(radiusMeters);
-      if (circleLive) circleLive.setRadius(radiusMeters);
       if (circleSdk) circleSdk.setRadius(radiusMeters);
     }
 
-    // --- File Parser (CSV) ---
+    // --- CSV File Parsers ---
     document.getElementById('store-csv').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -500,7 +320,6 @@
         if(stores.length > 0) {
           appStoreData = stores;
           if(mapDemo) { mapDemo.setView([stores[0].lat, stores[0].lng]); markerDemoStore.setLatLng([stores[0].lat, stores[0].lng]).setPopupContent(`<b>${stores[0].name}</b>`); circleDemo.setLatLng([stores[0].lat, stores[0].lng]);}
-          if(mapLive) { mapLive.setView([stores[0].lat, stores[0].lng]); markerLiveStore.setLatLng([stores[0].lat, stores[0].lng]).setPopupContent(`<b>${stores[0].name}</b>`); circleLive.setLatLng([stores[0].lat, stores[0].lng]);}
           if(mapSdk) { mapSdk.setView([stores[0].lat, stores[0].lng]); markerSdkStore.setLatLng([stores[0].lat, stores[0].lng]).setPopupContent(`<b>${stores[0].name}</b>`); circleSdk.setLatLng([stores[0].lat, stores[0].lng]);}
         }
       };
@@ -549,7 +368,7 @@
       return R * c;
     }
 
-    // --- Map Initialization Engines ---
+    // --- Map Initialization ---
     function initDemoMap() {
       if (mapDemo) return;
       mapDemo = L.map('map-demo', { zoomControl: false }).setView([appStoreData[0].lat, appStoreData[0].lng], 14);
@@ -567,25 +386,6 @@
       }).addTo(mapDemo);
 
       pathDemo = L.polyline([], { color: '#6366f1', weight: 4, dashArray: '5, 8' }).addTo(mapDemo);
-    }
-
-    function initLiveMap() {
-      if (mapLive) return;
-      mapLive = L.map('map-live', { zoomControl: false }).setView([appStoreData[0].lat, appStoreData[0].lng], 14);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(mapLive);
-      
-      markerLiveStore = L.marker([appStoreData[0].lat, appStoreData[0].lng]).addTo(mapLive)
-        .bindPopup(`<b>${appStoreData[0].name}</b>`);
-      
-      circleLive = L.circle([appStoreData[0].lat, appStoreData[0].lng], {
-        color: '#059669', fillColor: '#10b981', fillOpacity: 0.15, radius: configRadiusKm * 1000
-      }).addTo(mapLive);
-
-      markerLiveUser = L.marker([appRouteData[0].coordinateX, appRouteData[0].coordinateY], {
-        icon: L.divIcon({ className: 'bg-emerald-600 w-4 h-4 rounded-full border-2 border-white shadow' })
-      }).addTo(mapLive);
-
-      pathLive = L.polyline([], { color: '#10b981', weight: 4, dashArray: '5, 8' }).addTo(mapLive);
     }
 
     function initSdkMap() {
@@ -607,7 +407,7 @@
       pathSdk = L.polyline([], { color: '#f43f5e', weight: 4, dashArray: '5, 8' }).addTo(mapSdk);
     }
 
-    // --- Core Operations Logic Simulation Loop (Demo) ---
+    // --- Demo Simulation Loop ---
     document.getElementById('btn-start-demo').addEventListener('click', () => {
       if (demoInterval) {
         clearInterval(demoInterval);
@@ -640,7 +440,6 @@
         pathDemo.addLatLng(userLatLng);
         mapDemo.panTo(userLatLng);
 
-        // Geofence Check
         appStoreData.forEach(store => {
           const dist = getDistanceKm(currentPos.coordinateX, currentPos.coordinateY, store.lat, store.lng);
           if (dist <= configRadiusKm && !triggeredStores.has(store.id)) {
@@ -653,106 +452,30 @@
       }, 2500);
     });
 
-    // --- Helper function to fix Web/Mobile SDK endpoint URLs ---
+    // 💡 【核心補正関数】https:// の補正および末尾 / の削除、/event の付与を確実に実行
     function formatSdkUrl(rawUrl) {
-
-    // --- Ingestion API (取り込みAPI) Streaming Integration Loop ---
-    document.getElementById('btn-start-live').addEventListener('click', () => {
-      const tenant = document.getElementById('sf-tenant').value.trim();
-      const token = document.getElementById('sf-token').value.trim();
-
-      if (liveInterval) {
-        clearInterval(liveInterval);
-        liveInterval = null;
-        document.getElementById('btn-start-live').innerHTML = '<i class="fa-solid fa-bolt"></i> ストリーミング開始';
-        document.getElementById('live-status').innerText = "停止中";
-        return;
+      let url = rawUrl.trim();
+      if (!url) return "";
+      
+      // 1. プロトコルの補正
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
       }
+      
+      // 2. 末尾の不要なスラッシュの除去
+      while (url.endsWith('/')) {
+        url = url.slice(0, -1);
+      }
+      
+      // 3. 末尾に /event がない場合は追記
+      if (!url.endsWith('/event')) {
+        url = url + '/event';
+      }
+      
+      return url;
+    }
 
-      let step = 0;
-      triggeredStores.clear(); 
-      pathLive.setLatLngs([]);
-      hideNotification();
-      document.getElementById('btn-start-live').innerHTML = '<i class="fa-solid fa-stop"></i> ストリーミング停止';
-      document.getElementById('live-status').innerText = "配信中...";
-
-      liveInterval = setInterval(async () => {
-        if (step >= appRouteData.length) {
-          clearInterval(liveInterval);
-          liveInterval = null;
-          document.getElementById('btn-start-live').innerHTML = '<i class="fa-solid fa-bolt"></i> ストリーミング開始';
-          document.getElementById('live-status').innerText = "完了";
-          return;
-        }
-
-        const currentPos = appRouteData[step];
-        const userLatLng = [currentPos.coordinateX, currentPos.coordinateY];
-        
-        markerLiveUser.setLatLng(userLatLng);
-        pathLive.addLatLng(userLatLng);
-        mapLive.panTo(userLatLng);
-
-        // Geofence Local Check
-        let insideFence = 0;
-        let fenceStatusText = "Outside";
-        
-        appStoreData.forEach(store => {
-          const dist = getDistanceKm(currentPos.coordinateX, currentPos.coordinateY, store.lat, store.lng);
-          if (dist <= configRadiusKm) {
-            insideFence = 1;
-            fenceStatusText = "Inside";
-            if (!triggeredStores.has(store.id)) {
-              triggeredStores.add(store.id);
-              triggerNotificationBanner(store.name, dist);
-            }
-          }
-        });
-
-        // Real Ingestion API POST
-        if (tenant && token) {
-          const sourceName = document.getElementById('sf-source').value.trim() || "MobileEngagement";
-          const endpoint = `https://${tenant}/api/v1/ingest/sources/${sourceName}/LocationStream`;
-          
-          const payload = {
-            data: [{
-              eventId: currentPos.eventId || `EV-${Date.now()}-${step}`,
-              category: currentPos.category || "Engagement",
-              dateTime: currentPos.dateTime || new Date().toISOString(),
-              deviceId: currentPos.deviceId || "MOBILE-DEVICE-DEMO001",
-              eventType: currentPos.eventType || "LocationUpdate",
-              sessionId: currentPos.sessionId || "SESS-99999",
-              coordinateX: currentPos.coordinateX,
-              coordinateY: currentPos.coordinateY,
-              geofenceStatus: fenceStatusText,
-              IsInGeofence: insideFence
-            }]
-          };
-
-          try {
-            const res = await fetch(endpoint, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(payload)
-            });
-            if(res.ok) {
-              console.log("Ingestion API Success:", payload.data[0]);
-            } else {
-              console.error("Ingestion API Failure:", res.statusText);
-            }
-          } catch (err) {
-            console.error("Ingestion API Network Error: ", err);
-          }
-        }
-
-        step++;
-      }, 2500);
-    });
-
-
-    // --- Web & Mobile SDK (モバイルアプリ構造) Loop ---
+    // --- Web & Mobile SDK 送信 Loop ---
     document.getElementById('btn-start-sdk').addEventListener('click', () => {
       let rawSdkUrl = document.getElementById('sdk-url').value.trim();
       const sourceIdVal = document.getElementById('sdk-source-id').value.trim();
@@ -767,6 +490,7 @@
         return;
       }
 
+      // 自動補正の適用
       const sdkUrl = formatSdkUrl(rawSdkUrl);
 
       if (sdkInterval) {
@@ -800,7 +524,6 @@
         pathSdk.addLatLng(userLatLng);
         mapSdk.panTo(userLatLng);
 
-        // Geofence Local Check
         let insideFence = 0;
         let fenceStatusText = "Outside";
         
@@ -816,14 +539,12 @@
           }
         });
 
-        // 💡 モバイルアプリ Native SDK 構造準拠のペイロード
         const payload = {
           sourceId: sourceIdVal,
           interaction: {
             name: "Location Update",
             eventType: sdkEventTypeVal,
             parameters: {
-              // 1. 位置情報・イベント基本パラメータ
               eventId: currentPos.eventId || `EV-${Date.now()}-${step}`,
               category: "Engagement",
               dateTime: currentPos.dateTime || new Date().toISOString(),
@@ -834,7 +555,7 @@
               IsInGeofence: insideFence,
               eventType: sdkEventTypeVal,
 
-              // 2. モバイルアプリ特有の構造化メタデータ
+              // モバイル端末メタデータ
               deviceId: currentPos.deviceId || "MOBILE-DEVICE-DEMO001",
               deviceModel: "iPhone 15 Pro",
               osName: "iOS",
@@ -854,7 +575,7 @@
             },
             body: JSON.stringify(payload)
           });
-          console.log("Mobile App Event Sent (no-cors mode):", payload.interaction.parameters);
+          console.log("Mobile App Event Sent (no-cors mode) ->", sdkUrl, payload.interaction.parameters);
         } catch (err) {
           console.error("Web & Mobile SDK Network Error: ", err);
         }
@@ -863,10 +584,7 @@
       }, 2500);
     });
 
-    // ==========================================
-    // 💡 接続確認テスト用ロジックの実装 (モバイル構造)
-    // ==========================================
-
+    // --- SDK 接続確認テスト (モバイル構造) ---
     document.getElementById('btn-test-sdk').addEventListener('click', async () => {
       const btn = document.getElementById('btn-test-sdk');
       const rawSdkUrl = document.getElementById('sdk-url').value.trim();
@@ -878,11 +596,11 @@
         return;
       }
 
+      // 自動補正を適用した送信先URL
       const sdkUrl = formatSdkUrl(rawSdkUrl);
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> 送信中...';
 
-      // 💡 モバイルアプリ構成でのテストペイロード
       const payload = {
         sourceId: sourceIdVal,
         interaction: {
@@ -899,7 +617,6 @@
             IsInGeofence: 0,
             eventType: sdkEventTypeVal,
 
-            // モバイルアプリ用メタデータ
             deviceId: "MOBILE-DEVICE-TEST",
             deviceModel: "iPhone 15 Pro",
             osName: "iOS",
@@ -918,71 +635,15 @@
           body: JSON.stringify(payload)
         });
 
-        alert(`【送信完了】モバイルアプリ構造のテストイベントを送信しました！\n\nSalesforce（Data Cloud）の「データストリーム」詳細画面にてデータが受領されたかご確認ください。`);
+        alert(`【送信完了】補正された送信先エンドポイントへイベントを送信しました！\n\n送信先: ${sdkUrl}\n\nSalesforce（Data Cloud）の「データストリーム」詳細画面にて、最新レコードが届いているかご確認ください。`);
       } catch (err) {
         console.error(err);
         alert(`【通信失敗】\nネットワークエラーが発生しました。`);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> SDK 接続テストを送信 (モバイル構造)';
+        btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> SDK 接続テストを送信';
       }
     });
-
-    // Ingestion API 接続確認
-    document.getElementById('btn-test-ingest').addEventListener('click', async () => {
-      const btn = document.getElementById('btn-test-ingest');
-      const tenant = document.getElementById('sf-tenant').value.trim();
-      const token = document.getElementById('sf-token').value.trim();
-      const sourceName = document.getElementById('sf-source').value.trim() || "MobileEngagement";
-
-      if (!tenant || !token) {
-        alert("テナント特定エンドポイントURLとアクセストークンを入力、またはOAuthで取得してからテストしてください。");
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> 送信中...';
-
-      const endpoint = `https://${tenant}/api/v1/ingest/sources/${sourceName}/LocationStream`;
-      const payload = {
-        data: [{
-          eventId: `TEST-INGEST-${Date.now()}`,
-          category: "Engagement",
-          dateTime: new Date().toISOString(),
-          deviceId: "MOBILE-DEVICE-TEST",
-          eventType: "TestConnection",
-          sessionId: "TEST-SESSION-000",
-          coordinateX: 35.6835,
-          coordinateY: 139.7655,
-          geofenceStatus: "Outside",
-          IsInGeofence: 0
-        }]
-      };
-
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (res.status === 200 || res.status === 202) {
-          alert(`【成功】Ingestion APIがテストデータを受理しました！\nステータス: ${res.status} (${res.statusText})`);
-        } else {
-          alert(`【エラー】応答コード: ${res.status} (${res.statusText})`);
-        }
-      } catch (err) {
-        console.error(err);
-        alert(`【通信失敗】\nエンドポイントへの送信に失敗しました。`);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Ingestion API 接続テストを送信';
-      }
-    });
-
 
     // --- Notification System Interaction Logic ---
     function triggerNotificationBanner(storeName, distance) {
@@ -1011,13 +672,8 @@
       document.getElementById('coupon-modal').classList.add('hidden');
     });
 
+    // --- Restore Settings on Load ---
     window.onload = () => {
-      if (localStorage.getItem('sf_demo_client_id')) {
-        document.getElementById('oauth-client-id').value = localStorage.getItem('sf_demo_client_id');
-      }
-      if (localStorage.getItem('oauth_login_url')) {
-        document.getElementById('oauth-login-url').value = localStorage.getItem('oauth_login_url');
-      }
       if (localStorage.getItem('sdk_url')) {
         document.getElementById('sdk-url').value = localStorage.getItem('sdk_url');
       }
